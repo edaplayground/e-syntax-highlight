@@ -1,0 +1,117 @@
+<!doctype html>
+
+<!-- Copyright 2014 Victor EDA, Inc. All Rights Reserved. -->
+<!-- Contact Victor EDA, Inc. if you would like to use this code in your project. -->
+
+<title>CodeMirror: e Hardware Verification Language mode</title>
+<meta charset="utf-8"/>
+<link rel=stylesheet href="docs.css">
+
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/codemirror/4.4.0/codemirror.css"/>
+<script src="//cdnjs.cloudflare.com/ajax/libs/codemirror/4.4.0/codemirror.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/codemirror/4.4.0/addon/edit/matchbrackets.js"></script>
+<script src="simple.js"></script>
+<script src="e-mode.js"></script>
+<style type="text/css">.CodeMirror {border-top: 1px solid black; border-bottom: 1px solid black;}</style>
+
+<article>
+<h2>e Hardware Verification Language mode</h2>
+
+<div><textarea id="code" name="code">
+
+Example e code.
+
+&lt;'
+-----------------------------------------------------------------------------
+-- An example of using TCM.
+-- This TCM example is a verification of the xor_try Verilog module.
+-----------------------------------------------------------------------------
+
+
+unit verify {
+    clk : in simple_port of bit is instance;
+    p_inp : out simple_port of uint(bits:2) is instance;
+    p_out : in simple_port of bit is instance;
+
+    keep bind(p_inp,external);
+    keep p_inp.hdl_path() == "inp_xor";
+
+    keep bind(p_out,external);
+    keep p_out.hdl_path() == "out_xor";
+
+    keep bind(clk,external);
+    keep clk.hdl_path() == "clk";
+
+    event xor_clk is fall(clk$) @sim; -- Define a clocked event
+
+    verify() @xor_clk is {             -- Define a new TCM
+        -- Loop through generated ops
+        for each in sys.ops do {
+
+            p_inp$ = pack(NULL,it);
+            wait cycle;     -- Wait one more cycle before the next op
+
+            it.result_from_dut = p_out$;
+            -- Put the result in the field of operation
+            print it;   -- Print it
+            print p_out$;
+            print (it.a ^ it.b);
+            print sys.time;
+            check that it.result_from_dut == (it.a ^ it.b);
+
+            -- Check the field of operation (issue error
+            -- message on failure).
+            wait cycle;     -- Wait one more cycle before the next op
+        };
+        stop_run();        -- Stop the Verilog operation. Note the
+    };
+};
+
+struct operation {
+                        -- Physical fields
+    %a: uint (bits: 1);  -- First input
+    %b: uint (bits: 1);  -- Second input
+
+    !result_from_dut: int;
+                -- The result of the XOR, from the DUT
+                -- (Note: "!" means "do not generate")
+};
+
+
+extend sys {
+    ops: list of operation; -- The list of generated operations
+    keep ops.size() == 20;
+
+    verify is instance;
+    keep verify.hdl_path() == "xor_try";
+
+    run() is also {
+        start verify.verify();
+    };
+};
+'&gt;
+
+</textarea></div>
+
+<script>
+  var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+    lineNumbers: true,
+    matchBrackets: true,
+    mode: {
+      name: "eHVL"
+    }
+  });
+</script>
+
+<p>
+Syntax highlighting and indentation for the e Hardware Verification Language (IEEE 1647).
+</p>
+
+<!--
+<h2>Configuration options:</h2>
+<ul>
+</ul>
+ -->
+
+<p><strong>MIME types defined:</strong> <code>text/x-e-hvl</code>.</p>
+</article>
