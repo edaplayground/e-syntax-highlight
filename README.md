@@ -1,4 +1,4 @@
-Demo: http://victoreda.github.io/e-syntax-highlight/
+Demo: http://edaplayground.github.io/e-syntax-highlight/
 
 Copyright 2014 Victor EDA, Inc. All Rights Reserved.
 
